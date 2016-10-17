@@ -1,5 +1,9 @@
-chocolate is project for vArmour.
+Access boxes on cli mode, using python pexpect package
+
+#chocolate is project for vArmour.
 Using Pexpect lib to control vArmour director, EPs and EPis
+#WatchGuard AP
+Using Pexpect lib to control WatchGuard AP
 
 
 
