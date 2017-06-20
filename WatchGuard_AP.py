@@ -3,6 +3,7 @@
 import sys
 import pexpect
 import logging
+import re
 
 formatter = 'WatchGuard AP %(levelname)s %(module)s:%(pathname)s:%(funcName)s:%(lineno)d - %(message)s'
 logging.basicConfig(format = formatter, level=logging.INFO)
@@ -45,6 +46,13 @@ class WatchGuard_AP:
 				logger.error("Please transfer SNIP and SNPort!!!")
 				return("Nok")
 			conn_cmd += ("%s %s" %(self.SNIP,self.SNPort))
+		elif self.CLIMode == 'ssh':
+			logger.debug("using \"ssh\" to connect WatchGuard AP")
+			conn_cmd = 'ssh'
+			if self.HostIP == None:
+				logger.error("Please transfer HostIP!!!")
+				return("Nok")
+			conn_cmd += ("%s %s" %(self.HostIP))
 		else:
 			logger.warning("So far, AP just support telnet, Please using telnet to connect AP, Thanks.")
 			return("Nok")
@@ -98,6 +106,24 @@ class WatchGuard_AP:
 		if self.spawn.isalive():
 			logger.debug("disconnect %s" % self.Name)
 			self.spawn.close()
+			
+	def iwconfig(self):
+		rt = {}
+		result = self.shell_cmd('iwconfig')
+		rc = re.compile('ath\d+.*?\n\s*\n',re.I|re.S)
+		aths = rc.findall(result)
+		for ath in aths:
+			ath_match = re.match(r'(ath\d+).*?ESSID:"(.*?)".*?Frequency:([\d.]+) GHz.*?Tx-Power:([\d+]).*?Encryption key:([\w]+)', ath, re.M|re.I|re.S)
+			if ath_match:
+				ath_name = ath_match.group(1)
+				rt[ath_name] = {}
+				rt[ath_name]['result'] = ath
+				rt[ath_name]['ESSID'] = ath_match.group(2)
+				rt[ath_name]['Frequency'] = ath_match.group(3)
+                rt[ath_name]['Tx-Power'] = ath_match.group(4)
+                rt[ath_name]['Encryption-key'] = ath_match.group(5)
+			else:
+				print("Error to find")
 
 if __name__ == "__main__":
 	AP1 = WatchGuard_AP(SNIP = '10.138.255.77',SNPort = '5015')
